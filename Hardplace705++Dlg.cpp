@@ -164,10 +164,13 @@ BOOL CHardplace705Dlg::OnInitDialog()
 				CString comPort;
 
 				comPort.Format(_T("COM%u"), pPortBuf[nIndex]);
-				int iIndex(m_CommPort.AddString(comPort));
-				if (iIndex >= 0)
+				if (m_CommPort.FindStringExact(-1, comPort) == CB_ERR)
 				{
-					m_CommPort.SetItemData(iIndex, pPortBuf[nIndex]);
+					int iIndex(m_CommPort.AddString(comPort));
+					if (iIndex >= 0)
+					{
+						m_CommPort.SetItemData(iIndex, pPortBuf[nIndex]);
+					}
 				}
 			}
 			UINT uDefaultPort(theApp.GetProfileInt(_T("Settings"), _T("Port"), 0));
