@@ -687,7 +687,8 @@ void CHardplace705Dlg::onIOTimer(void)
 					}
 				}
 			}
-			else if (m_cIOFailures % 10 < 2)
+			else if (m_cIOFailures % 10 < 2
+					 || m_cIOFailures < 13) // 12.64ms FT8 Transmit time
 			{
 				CString sResp;
 				HardrockCmd("HRMD;", sResp, false);
@@ -709,7 +710,7 @@ void CHardplace705Dlg::onIOTimer(void)
 			}
 			else if (++m_cIOFailures >= INT_MAX)
 			{
-				m_cIOFailures = 0;
+				m_cIOFailures = 13;
 			}
 		}
 		else if (m_PwrCtrl.GetPos() != m_PwrCtrl.GetRangeMax())
