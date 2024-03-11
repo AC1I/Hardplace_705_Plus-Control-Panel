@@ -85,4 +85,7 @@ private:
 	bool m_fPlacementSet;
 	unsigned int m_cIOFailures;
 	bool m_IOPingPong;
+public:
+	afx_msg BOOL OnQueryEndSession();
+	afx_msg void OnEndSession(BOOL bEnding);
 };

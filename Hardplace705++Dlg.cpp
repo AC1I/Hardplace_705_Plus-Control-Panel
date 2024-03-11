@@ -86,6 +86,8 @@ BEGIN_MESSAGE_MAP(CHardplace705Dlg, CDialogEx)
 	ON_CONTROL_RANGE(BN_CLICKED, IDC_PTT, IDC_QRP, &CHardplace705Dlg::OnClickedPtt)
 	ON_BN_CLICKED(IDC_TUNE, &CHardplace705Dlg::OnTune)
 	ON_MESSAGE(WM_APP, &CHardplace705Dlg::OnAppInit)
+	ON_WM_QUERYENDSESSION()
+	ON_WM_ENDSESSION()
 END_MESSAGE_MAP()
 
 
@@ -289,6 +291,8 @@ void CHardplace705Dlg::OnOpenComPort()
 	{
 		if (!m_Serial.IsOpen())
 		{
+			CWaitCursor wait;
+
 			m_Serial.Open(int(m_CommPort.GetItemData(m_CommPort.GetCurSel())), DWORD(115200));
 			if (m_Serial.IsOpen())
 			{
@@ -683,6 +687,10 @@ void CHardplace705Dlg::onIOTimer(void)
 							uPower += static_cast<unsigned>(uchValue) * uMultiplier;
 							uMultiplier *= 100;
 						}
+						if ((m_PwrCtrl.GetPos() - (m_PwrCtrl.GetRangeMax() - int(uPower))) / m_PwrCtrl.GetPageSize() > 2)
+						{
+							m_cIOFailures = 0; // Big jump in power, Hardrock Powered up?
+						}
 						m_PwrCtrl.SetPos(m_PwrCtrl.GetRangeMax() - int(uPower));
 					}
 				}
@@ -757,4 +765,28 @@ afx_msg LRESULT CHardplace705Dlg::OnAppInit(WPARAM wParam, LPARAM lParam)
 		}
 	}
 	return 0;
+}
+
+
+BOOL CHardplace705Dlg::OnQueryEndSession()
+{
+#if 0
+	if (!CDialogEx::OnQueryEndSession())
+		return FALSE;
+#else
+	CDialogEx::OnQueryEndSession();
+#endif
+	// TODO:  Add your specialized query end session code here
+
+	return TRUE;
+}
+
+
+void CHardplace705Dlg::OnEndSession(BOOL bEnding)
+{
+	CDialogEx::OnEndSession(bEnding);
+
+	// TODO: Add your message handler code here
+	OnClose();
+	EndDialog(-1);
 }
