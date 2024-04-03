@@ -175,10 +175,16 @@ BOOL CHardplace705Dlg::OnInitDialog()
 					}
 				}
 			}
-			UINT uDefaultPort(theApp.GetProfileInt(_T("Settings"), _T("Port"), 0));
+
+			UINT uDefaultPort(theApp.getPort());
+			
+			if (uDefaultPort == 0) {
+				uDefaultPort = theApp.GetProfileInt(_T("Settings"), _T("Port"), 0);
+			}
+
 			CString findString;
 
-			findString.Format(_T("COM%u"), theApp.GetProfileInt(_T("Settings"), _T("Port"), 0));
+			findString.Format(_T("COM%u"), uDefaultPort);
 			int nIndex(m_CommPort.FindStringExact(-1, findString));
 
 			if (nIndex != CB_ERR)
@@ -318,8 +324,11 @@ void CHardplace705Dlg::OnOpenComPort()
 						UpdateData(FALSE);
 						EnableHardrock();
 					}
-					theApp.WriteProfileInt(
-						_T("Settings"), _T("Port"), int(m_CommPort.GetItemData(m_CommPort.GetCurSel())));
+					if (!theApp.getPort())
+					{
+						theApp.WriteProfileInt(
+							_T("Settings"), _T("Port"), int(m_CommPort.GetItemData(m_CommPort.GetCurSel())));
+					}
 					EnableIOTimer();
 				}
 				else
@@ -528,8 +537,11 @@ void CHardplace705Dlg::OnDestroy()
 	WINDOWPLACEMENT wp = { 0 };
 	wp.length = sizeof(WINDOWPLACEMENT);
 	GetWindowPlacement(&wp);
-	theApp.WriteProfileBinary(_T("Settings"), _T("Window"), (LPBYTE)&wp, wp.length);
-	theApp.WriteProfileInt(_T("Settings"), _T("OnTop"), (GetWindowLong(GetSafeHwnd(), GWL_EXSTYLE) & WS_EX_TOPMOST) != 0 ? 1 : 0);
+	if (!theApp.getPort())
+	{
+		theApp.WriteProfileBinary(_T("Settings"), _T("Window"), (LPBYTE)&wp, wp.length);
+		theApp.WriteProfileInt(_T("Settings"), _T("OnTop"), (GetWindowLong(GetSafeHwnd(), GWL_EXSTYLE) & WS_EX_TOPMOST) != 0 ? 1 : 0);
+	}
 }
 
 
@@ -545,7 +557,8 @@ void CHardplace705Dlg::OnShowWindow(BOOL bShow, UINT nStatus)
 
 		m_fPlacementSet = true;
 
-		if (theApp.GetProfileBinary(_T("Settings"), _T("Window"), (LPBYTE*)&lwp, &nl))
+		if (!theApp.getPort()
+			&& theApp.GetProfileBinary(_T("Settings"), _T("Window"), (LPBYTE*)&lwp, &nl))
 		{
 			SetWindowPlacement(lwp);
 			delete[] lwp;

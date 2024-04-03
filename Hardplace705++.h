@@ -9,7 +9,7 @@
 #endif
 
 #include "resource.h"		// main symbols
-
+#include "CmdLineArgs.h"
 
 // CHardplace705App:
 // See Hardplace705++.cpp for the implementation of this class
@@ -27,6 +27,14 @@ public:
 // Implementation
 
 	DECLARE_MESSAGE_MAP()
+	CCmdLineArgs m_Args;
+
+public:
+	UINT getPort()
+	{
+		// TODO: Add your implementation code here.
+		return m_Args.getPort();
+	}
 };
 
 extern CHardplace705App theApp;

@@ -184,6 +184,7 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="CmdLineArgs.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="Hardplace705++.h" />
     <ClInclude Include="Hardplace705++Dlg.h" />

@@ -54,7 +54,9 @@ BOOL CHardplace705App::InitInstance()
 	// Change the registry key under which our settings are stored
 	// TODO: You should modify this string to be something appropriate
 	// such as the name of your company or organization
-	SetRegistryKey(_T("AC1KM"));
+	SetRegistryKey(_T("AC1I"));
+
+	ParseCommandLine(m_Args);
 
 	CHardplace705Dlg dlg;
 	m_pMainWnd = &dlg;
