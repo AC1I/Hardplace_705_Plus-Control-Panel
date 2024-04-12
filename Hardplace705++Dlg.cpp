@@ -880,6 +880,21 @@ BOOL CComFlushDialog::OnInitDialog()
 					}
 				}
 			}
+
+			UINT uDefaultPort(theApp.GetProfileInt(_T("Settings"), _T("FlushPort"), 0));
+
+			if (uDefaultPort != 0)
+			{
+				CString findString;
+
+				findString.Format(_T("COM%u"), uDefaultPort);
+				int nIndex(m_CommPort.FindStringExact(-1, findString));
+
+				if (nIndex != CB_ERR)
+				{
+					m_CommPort.SetCurSel(nIndex);
+				}
+			}
 		}
 		else
 		{
@@ -925,6 +940,7 @@ void CComFlushDialog::OnBnClickedOk()
 			if (Serial.IsOpen())
 			{
 				Serial.Close();
+				theApp.WriteProfileInt(_T("Settings"), _T("FlushPort"), int(m_CommPort.GetItemData(m_CommPort.GetCurSel())));
 			}
 		}
 		catch (CSerialException ex)
