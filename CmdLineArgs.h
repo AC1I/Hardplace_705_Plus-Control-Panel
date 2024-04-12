@@ -12,14 +12,15 @@ public:
     {
         // TODO: Add your implementation code here.
         CString Args(pszParam);
+        const CString szToken(_T("PORT=COM"));
 
         Args.MakeUpper();
-        if (Args.Find(_T("PORT=COM")) == 0) {
-            m_Port = static_cast<UINT>(_ttoi(Args.Mid(8)));
+        if (Args.Find(szToken) == 0) {
+            m_Port = static_cast<UINT>(_ttoi(Args.Mid(szToken.GetLength())));
         }
-
     }
-    UINT getPort(void) {
+public:
+    UINT getPort(void) const {
         return m_Port;
     }
 protected:

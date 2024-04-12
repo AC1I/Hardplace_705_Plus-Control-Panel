@@ -56,7 +56,7 @@ BOOL CHardplace705App::InitInstance()
 	// such as the name of your company or organization
 	SetRegistryKey(_T("AC1I"));
 
-	ParseCommandLine(m_Args);
+	ParseCommandLine(*this);
 
 	CHardplace705Dlg dlg;
 	m_pMainWnd = &dlg;

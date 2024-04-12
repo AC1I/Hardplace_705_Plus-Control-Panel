@@ -15,7 +15,7 @@
 // See Hardplace705++.cpp for the implementation of this class
 //
 
-class CHardplace705App : public CWinApp
+class CHardplace705App : public CWinApp, public CCmdLineArgs
 {
 public:
 	CHardplace705App();
@@ -27,14 +27,6 @@ public:
 // Implementation
 
 	DECLARE_MESSAGE_MAP()
-	CCmdLineArgs m_Args;
-
-public:
-	UINT getPort()
-	{
-		// TODO: Add your implementation code here.
-		return m_Args.getPort();
-	}
 };
 
 extern CHardplace705App theApp;

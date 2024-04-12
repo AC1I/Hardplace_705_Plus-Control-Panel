@@ -16,6 +16,7 @@
 
 constexpr auto IDM_REBOOT = 0x0020;
 constexpr auto IDM_ONTOP = 0x0030;
+constexpr auto IDM_FLUSH = 0x0040;
 
 // CAboutDlg dialog used for App About
 
@@ -110,6 +111,8 @@ BOOL CHardplace705Dlg::OnInitDialog()
 	ASSERT(IDM_REBOOT < 0xF000);
 	ASSERT((IDM_ONTOP & 0xFFF0) == IDM_ONTOP);
 	ASSERT(IDM_ONTOP < 0xF000);
+	ASSERT((IDM_FLUSH & 0xFFF0) == IDM_FLUSH);
+	ASSERT(IDM_FLUSH < 0xF000);
 
 
 	CMenu* pSysMenu = GetSystemMenu(FALSE);
@@ -122,12 +125,16 @@ BOOL CHardplace705Dlg::OnInitDialog()
 		CString strReboot;
 		bNameValid = strReboot.LoadString(IDS_REBOOT);
 		ASSERT(bNameValid);
+		CString strFlush;
+		bNameValid = strFlush.LoadString(IDS_FLUSHRSBA1);
+		ASSERT(bNameValid);
 
 		if (!strReboot.IsEmpty())
 		{
 			pSysMenu->AppendMenu(MF_SEPARATOR);
 			pSysMenu->AppendMenu(MF_STRING, IDM_ONTOP, strOnTop);
 			pSysMenu->AppendMenu(MF_STRING, IDM_REBOOT, strReboot);
+			pSysMenu->AppendMenu(MF_STRING, IDM_FLUSH, strFlush);
 		}
 
 		CString strAboutMenu;
@@ -235,6 +242,11 @@ void CHardplace705Dlg::OnSysCommand(UINT nID, LPARAM lParam)
 	else if ((nID & 0xFFF0) == IDM_ONTOP)
 	{
 		SetWindowPos(((GetWindowLong(GetSafeHwnd(), GWL_EXSTYLE) & WS_EX_TOPMOST) != 0) ? &wndNoTopMost : &wndTopMost, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+	}
+	else if ((nID & 0xFFF0) == IDM_FLUSH)
+	{
+		CComFlushDialog FlushDlg;
+		FlushDlg.DoModal();
 	}
 	else
 	{
@@ -449,6 +461,23 @@ DWORD CHardplace705Dlg::BytesAvailable(void)
 	COMSTAT Status;
 
 	if (ClearCommError(HANDLE(m_Serial), &dwErrors, &Status))
+	{
+		dwAvailable = Status.cbInQue;
+	}
+	else
+	{
+		CSerialPort::ThrowSerialException();
+	}
+	return dwAvailable;
+}
+
+DWORD CHardplace705Dlg::BytesAvailable(CSerialPort& rSerial)
+{
+	DWORD dwAvailable(0);
+	DWORD dwErrors;
+	COMSTAT Status;
+
+	if (ClearCommError(HANDLE(rSerial), &dwErrors, &Status))
 	{
 		dwAvailable = Status.cbInQue;
 	}
@@ -803,4 +832,105 @@ void CHardplace705Dlg::OnEndSession(BOOL bEnding)
 
 	// TODO: Add your message handler code here
 	EndDialog(-1);
+}
+
+
+CComFlushDialog::CComFlushDialog() : CDialogEx(IDD_FLUSHCOMPORT)
+{
+}
+
+void CComFlushDialog::DoDataExchange(CDataExchange* pDX)
+{
+	CDialogEx::DoDataExchange(pDX);
+	DDX_Control(pDX, IDC_BA1PORT, m_CommPort);
+}
+
+BEGIN_MESSAGE_MAP(CComFlushDialog, CDialogEx)
+	ON_BN_CLICKED(IDOK, &CComFlushDialog::OnBnClickedOk)
+END_MESSAGE_MAP()
+
+
+BOOL CComFlushDialog::OnInitDialog()
+{
+	CDialog::OnInitDialog();
+
+	// TODO:  Add extra initialization here
+	ULONG uPortsFound(0);
+
+	if (GetCommPorts(0, 0, &uPortsFound) == ERROR_MORE_DATA)
+	{
+#pragma warning(push)
+#pragma warning(disable : 6001 )
+		CAutoPtr<ULONG> pPortBuf(new ULONG[uPortsFound]);
+#pragma warning(pop)
+
+		if (GetCommPorts(pPortBuf, uPortsFound, &uPortsFound) == ERROR_SUCCESS)
+		{
+			for (unsigned nIndex(0); nIndex < uPortsFound; nIndex++)
+			{
+				CString comPort;
+
+				comPort.Format(_T("COM%u"), pPortBuf[nIndex]);
+				if (m_CommPort.FindStringExact(-1, comPort) == CB_ERR)
+				{
+					int iIndex(m_CommPort.AddString(comPort));
+					if (iIndex >= 0)
+					{
+						m_CommPort.SetItemData(iIndex, pPortBuf[nIndex]);
+					}
+				}
+			}
+		}
+		else
+		{
+			AfxMessageBox(IDS_NOTFOUND);;
+		}
+	}
+
+	return TRUE;  // return TRUE unless you set the focus to a control
+	// EXCEPTION: OCX Property Pages should return FALSE
+}
+
+
+void CComFlushDialog::OnBnClickedOk()
+{
+	// TODO: Add your control notification handler code here
+	if (m_CommPort.GetCurSel() == CB_ERR)
+	{
+		MessageBeep(MB_ICONERROR);
+	}
+	else
+	{
+		try
+		{
+			CSerialPort Serial;
+
+			Serial.Open(int(m_CommPort.GetItemData(m_CommPort.GetCurSel())), DWORD(19200));
+
+			for (DWORD dwOctets(CHardplace705Dlg::BytesAvailable(Serial)); (Serial.IsOpen() && dwOctets > 0); dwOctets = CHardplace705Dlg::BytesAvailable(Serial))
+			{
+#pragma warning(push)
+#pragma warning(disable : 6001 )
+				CAutoPtr<uint8_t> Buf(new uint8_t[dwOctets]);
+#pragma warning(pop)
+
+				try
+				{
+					Serial.Read(Buf, dwOctets);
+				}
+				catch (CSerialException ex)
+				{
+				}
+			}
+			if (Serial.IsOpen())
+			{
+				Serial.Close();
+			}
+		}
+		catch (CSerialException ex)
+		{
+		}
+
+		CDialogEx::OnOK();
+	}
 }

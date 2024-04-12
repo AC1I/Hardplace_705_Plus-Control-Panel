@@ -5,6 +5,7 @@
 #pragma once
 
 #include "SerialPort.h"
+#include <afxwin.h>
 
 // CHardplace705Dlg dialog
 class CHardplace705Dlg : public CDialogEx
@@ -22,6 +23,9 @@ protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV support
 
 	// Implementation
+public:
+	static DWORD BytesAvailable(CSerialPort& rSerial);
+
 protected:
 	void onSerialException(CSerialException& ex);
 	void HardrockCmd(const char* lpszCmd, CString& rResponse, bool fUpdateText = true);
@@ -88,4 +92,30 @@ private:
 public:
 	afx_msg BOOL OnQueryEndSession();
 	afx_msg void OnEndSession(BOOL bEnding);
+};
+
+class CComFlushDialog :
+	public CDialogEx
+{
+public:
+	CComFlushDialog();
+
+	// Dialog Data
+#ifdef AFX_DESIGN_TIME
+	enum { IDD = IDD_FLUSHCOMPORT };
+#endif
+protected:
+	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
+
+	// Implementation
+protected:
+	DECLARE_MESSAGE_MAP()
+
+public:
+	virtual BOOL OnInitDialog();
+
+protected:
+	CComboBox m_CommPort;
+public:
+	afx_msg void OnBnClickedOk();
 };
