@@ -645,8 +645,6 @@ void CHardplace705Dlg::OnTune()
 {
 	// TODO: Add your control notification handler code here
 	CStringA sCmd("HRTU;");
-	const uint8_t  WriteRFPowerReq[] = { 0xFE, 0xFE, 0xA4, 0xE5, 0x14, 0x0A, 0x00, 0x55, 0xFD }; // 3 Watts
-	uint8_t achRsp[6];
 
 	try
 	{
@@ -655,8 +653,6 @@ void CHardplace705Dlg::OnTune()
 			m_Serial.Write(sCmd, DWORD(sCmd.GetLength()));
 
 			ClearSerial();
-			m_Serial.Write(WriteRFPowerReq, DWORD(sizeof WriteRFPowerReq));
-			m_Serial.Read(achRsp, sizeof achRsp);
 		}
 	}
 	catch (CSerialException ex)
