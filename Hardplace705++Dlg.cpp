@@ -184,7 +184,7 @@ BOOL CHardplace705Dlg::OnInitDialog()
 			}
 
 			UINT uDefaultPort(theApp.getPort());
-			
+
 			if (uDefaultPort == 0) {
 				uDefaultPort = theApp.GetProfileInt(_T("Settings"), _T("Port"), 0);
 			}
@@ -207,6 +207,10 @@ BOOL CHardplace705Dlg::OnInitDialog()
 		else
 		{
 			AfxMessageBox(IDS_NOTFOUND);;
+		}
+		if (theApp.GetProfileInt(_T("Settings"), _T("FlushPort"), 0) != 0)
+		{
+			SetTimer(RSBA1Poll, RSBA1PollInterval, NULL);
 		}
 	}
 
@@ -419,6 +423,10 @@ void CHardplace705Dlg::OnTimer(UINT_PTR nIDEvent)
 		SetDlgItemText(IDC_STATUS, _T(""));
 		KillTimer(nIDEvent);
 	}
+	else if (nIDEvent == RSBA1Poll)
+	{
+		FlushRSBA1();
+	}
 	CDialogEx::OnTimer(nIDEvent);
 }
 
@@ -571,6 +579,7 @@ void CHardplace705Dlg::OnDestroy()
 		theApp.WriteProfileBinary(_T("Settings"), _T("Window"), (LPBYTE)&wp, wp.length);
 		theApp.WriteProfileInt(_T("Settings"), _T("OnTop"), (GetWindowLong(GetSafeHwnd(), GWL_EXSTYLE) & WS_EX_TOPMOST) != 0 ? 1 : 0);
 	}
+	KillTimer(RSBA1Poll);
 }
 
 
@@ -944,5 +953,63 @@ void CComFlushDialog::OnBnClickedOk()
 		}
 
 		CDialogEx::OnOK();
+	}
+}
+
+
+void CHardplace705Dlg::FlushRSBA1()
+{
+	UINT uDefaultPort(theApp.GetProfileInt(_T("Settings"), _T("FlushPort"), 0));
+
+	if (uDefaultPort != 0)
+	{
+		ULONG uPortsFound(0);
+
+		if (GetCommPorts(0, 0, &uPortsFound) == ERROR_MORE_DATA)
+		{
+#pragma warning(push)
+#pragma warning(disable : 6001 )
+			CAutoPtr<ULONG> pPortBuf(new ULONG[uPortsFound]);
+#pragma warning(pop)
+
+			if (GetCommPorts(pPortBuf, uPortsFound, &uPortsFound) == ERROR_SUCCESS)
+			{
+				for (unsigned nIndex(0); nIndex < uPortsFound; nIndex++)
+				{
+					if (pPortBuf[nIndex] == uDefaultPort)
+					{
+						try
+						{
+							CSerialPort Serial;
+
+							Serial.Open(int(uDefaultPort), DWORD(19200));
+
+							for (DWORD dwOctets(CHardplace705Dlg::BytesAvailable(Serial)); (Serial.IsOpen() && dwOctets > 0); dwOctets = CHardplace705Dlg::BytesAvailable(Serial))
+							{
+#pragma warning(push)
+#pragma warning(disable : 6001 )
+								CAutoPtr<uint8_t> Buf(new uint8_t[dwOctets]);
+#pragma warning(pop)
+								try
+								{
+									Serial.Read(Buf, dwOctets);
+								}
+								catch (CSerialException ex)
+								{
+								}
+							}
+							if (Serial.IsOpen())
+							{
+								Serial.Close();
+							}
+						}
+						catch (CSerialException ex)
+						{
+						}
+						break;
+					}
+				}
+			}
+		}
 	}
 }

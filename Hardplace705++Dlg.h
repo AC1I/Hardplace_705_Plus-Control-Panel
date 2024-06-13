@@ -84,6 +84,8 @@ protected:
 	const UINT_PTR IcomPoll = 2;
 	const UINT IcomPollInterval = 500;
 	int m_iPTT;
+	const UINT_PTR RSBA1Poll = 3;
+	const UINT RSBA1PollInterval = 2000;
 
 private:
 	bool m_fPlacementSet;
@@ -92,6 +94,8 @@ private:
 public:
 	afx_msg BOOL OnQueryEndSession();
 	afx_msg void OnEndSession(BOOL bEnding);
+protected:
+	void FlushRSBA1();
 };
 
 class CComFlushDialog :
